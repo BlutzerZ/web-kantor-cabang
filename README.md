@@ -2,6 +2,8 @@
 
 # Branch Office Web
 
+![](image.png)
+
 A simple internal panel to view product data from Odoo (PostgreSQL) and back it up to SQL Server, with basic authentication using Laravel 12.
 
 </div>
