@@ -1,61 +1,152 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<div align="center">
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+# Branch Office Web
 
-## About Laravel
+A simple internal panel to view product data from Odoo (PostgreSQL) and back it up to SQL Server, with basic authentication using Laravel 12.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+</div>
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## ✨ Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+-   Secure login (database session driver) and logout.
+-   Modern dashboard (TailwindCSS) with quick stats.
+-   Odoo Products list (template_id, product_id, sale price, cost price, UoM, category, stock, created/updated at).
+-   One-click Backup button to copy data from Odoo (PostgreSQL) to the `backup_products` table in SQL Server.
+-   Cleans Odoo-specific values (JSON name/UoM/cost) so they persist as plain text/numeric values.
 
-## Learning Laravel
+## 🧱 Architecture
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+-   Backend: Laravel 12 (PHP 8.2)
+-   Auth & Session: MySQL (default DB), sessions stored in the `sessions` table
+-   Data Source: Odoo on PostgreSQL (`connection: pgsql`)
+-   Backup: SQL Server (`connection: sqlsrv`, table: `backup_products`)
+-   Frontend tooling: TailwindCSS (UI components via CDN)
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+Main routes:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+-   `GET /login` – login form
+-   `POST /login` – process login
+-   `POST /logout` – logout
+-   `GET /dashboard` – overview and 2 tables: Odoo vs Backup
+-   `POST /dashboard/backup` – backup from Odoo to SQL Server
 
-## Laravel Sponsors
+## 🔧 Requirements
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+-   PHP 8.2+ with extensions: `openssl`, `pdo`, `mbstring`, `tokenizer`, `xml`, `ctype`, `json`
+-   Databases:
+    -   MySQL (Users + Sessions)
+    -   PostgreSQL (Odoo)
+    -   SQL Server (backup)
+-   PHP DB drivers:
+    -   PostgreSQL: `pdo_pgsql`
+    -   SQL Server (Windows): Microsoft ODBC Driver + `sqlsrv` and `pdo_sqlsrv` extensions
 
-### Premium Partners
+## 🚀 Setup & Run
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+1. Install dependencies
 
-## Contributing
+```bash
+composer install
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+2. Copy env & generate app key
 
-## Code of Conduct
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+3. Configure database connections in `.env`
 
-## Security Vulnerabilities
+Example (see `.env` in the repo for the full set of variables):
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```env
+# Default (MySQL) for users & sessions
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=users
+DB_USERNAME=root
+DB_PASSWORD=******
 
-## License
+# Odoo (PostgreSQL)
+DB_ODOO_CONNECTION=pgsql
+DB_ODOO_HOST=127.0.0.1
+DB_ODOO_PORT=5432
+DB_ODOO_DATABASE=odoo
+DB_ODOO_USERNAME=odoo_user
+DB_ODOO_PASSWORD=******
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# Backup (SQL Server)
+DB_SQLSRV_CONNECTION=sqlsrv
+DB_SQLSRV_HOST=127.0.0.1
+DB_SQLSRV_PORT=1433
+DB_SQLSRV_DATABASE=backup_products
+DB_SQLSRV_USERNAME=sa
+DB_SQLSRV_PASSWORD=******
+
+SESSION_DRIVER=database
+```
+
+4. Run migrations + seed (default MySQL)
+
+```bash
+php artisan migrate --seed
+```
+
+Seeder creates a default account:
+
+-   Email: `admin@example.com`
+-   Password: `11111111`
+
+5. Create the backup table in SQL Server (manual)
+
+Ensure the SQL Server database (`backup_products`) exists, then run this script:
+
+```sql
+CREATE TABLE dbo.backup_products (
+	template_id   INT            NOT NULL,
+	product_id    INT            NOT NULL,
+	product_name  NVARCHAR(255)  NULL,
+	sku           NVARCHAR(100)  NULL,
+	sale_price    DECIMAL(18,2)  NULL,
+	cost_price    DECIMAL(18,2)  NULL,
+	uom_name      NVARCHAR(100)  NULL,
+	category_name NVARCHAR(255)  NULL,
+	total_stock   DECIMAL(18,2)  NULL,
+	create_date   DATETIME2      NULL,
+	write_date    DATETIME2      NULL,
+	backup_at     DATETIME2      NULL,
+	CONSTRAINT PK_backup_products PRIMARY KEY CLUSTERED (product_id)
+);
+
+-- Optional: keep product_id unique
+-- CREATE UNIQUE INDEX backup_products_unique_1 ON dbo.backup_products(product_id);
+```
+
+6. Start the app
+
+```bash
+php artisan serve
+```
+
+Open: http://localhost:8000 (or as shown in artisan serve output).
+
+## 🖥️ Usage
+
+1. Log in using the default account above.
+2. Go to Dashboard to see the overview plus product tables from Odoo & Backup.
+3. Click “Backup Produk” to copy the latest data from Odoo to SQL Server.
+
+Note: The controller already handles Odoo JSON-shaped values (e.g. `{"en_US": "..."}`) so name/UoM/cost are stored cleanly as text/numbers in the backup.
+
+## 🔍 Troubleshooting
+
+-   “Database connection [pgodoo] not configured”: ensure the connection used is `pgsql` (it is in code). Check `DB_ODOO_*` variables in `.env` and ensure `pdo_pgsql` extension is enabled.
+-   Date/number conversion error when inserting into SQL Server: ensure column types in `backup_products` follow the script above (`DECIMAL` and `DATETIME2`).
+-   Duplicate data (unique constraint): drop the unique index if you want multiple backup histories per `product_id`, or change the `PRIMARY KEY` to a composite `(product_id, backup_at)` to support versions.
+
+## 📦 Stack
+
+-   Laravel 12, PHP 8.2
+-   MySQL (auth & sessions), PostgreSQL (Odoo), SQL Server (backup)
