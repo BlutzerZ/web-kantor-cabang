@@ -22,7 +22,7 @@ class AuthController extends Controller
         ]);
 
         if (Auth::attempt($request->only('email', 'password'))) {
-            return view('dashboard');
+            return redirect()->route('dashboard');
         } else {
             return back()->withErrors([
                 'email' => 'Email or password is incorrect.',
